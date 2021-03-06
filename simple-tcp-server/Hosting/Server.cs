@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Net;
+using System;
 using System.Net.Sockets;
 using System.Threading;
 using simple_tcp_server.Data;
@@ -35,29 +36,33 @@ namespace simple_tcp_server.Hosting
         private static void ConnectionThread() 
         {
             while (IsRunning())
-            {
-                socket.Listen(0);
-                Socket connectingSocket = socket.Accept();
-                Logger.Log($"[Server] Incoming connection from {connectingSocket.RemoteEndPoint}...");
-                bool foundSlot = false;
-                foreach (ServerSlot slot in serverSlots)
-                {
-                    if (slot.IsEmpty())
-                    {
-                        slot.Connect(connectingSocket);
-                        Logger.Log($"[Server] Sending registration to {connectingSocket.RemoteEndPoint}...");
-                        ServerSend.Registration(slot.id);
-                        foundSlot = true;
-                        break;
-                    }
-                }
-                if (!foundSlot)
-                {
-                    Logger.Log($"[Server] Failed to connect [{connectingSocket.RemoteEndPoint}]: Server is full!");
-                    ServerSend.Error("Server is full", connectingSocket);
-                    connectingSocket.Close();
-                }
-            }
+            {	
+				try
+				{
+					socket.Listen(0);
+					Socket connectingSocket = socket.Accept();
+					Logger.Log($"[Server] Incoming connection from {connectingSocket.RemoteEndPoint}...");
+					bool foundSlot = false;
+					foreach (ServerSlot slot in serverSlots)
+					{
+						if (slot.IsEmpty())
+						{
+							slot.Connect(connectingSocket);
+							Logger.Log($"[Server] Sending registration to {connectingSocket.RemoteEndPoint}...");
+							ServerSend.Registration(slot.id);
+							foundSlot = true;
+							break;
+						}
+					}
+					if (!foundSlot)
+					{
+						Logger.Log($"[Server] Failed to connect [{connectingSocket.RemoteEndPoint}]: Server is full!");
+						ServerSend.Error("Server is full", connectingSocket);
+						connectingSocket.Close();
+					}
+				}
+				catch {}
+			}
         }
         private static void ReceivingThread(object serverSlot) 
         {
@@ -88,6 +93,11 @@ namespace simple_tcp_server.Hosting
         {
             return socket != null;
         }
+		private static void CloseServerIfNoPlayers()
+		{
+		if (GetConnectedClients().Count == 0)
+			Disconnect();
+		}
         public static void Disconnect()
         {
             Logger.Log("[Server] Socked closed, You are now disconnected!");
@@ -126,6 +136,7 @@ namespace simple_tcp_server.Hosting
                     socket.Shutdown(SocketShutdown.Both);
                     socket = null;
                     Logger.Log($"[Client {id}] has disconnected!");
+					CloseServerIfNoPlayers();
                 }
             }
             public bool IsEmpty() { return socket == null; }

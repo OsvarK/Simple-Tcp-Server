@@ -43,6 +43,11 @@ namespace simple_tcp_server.Connecting
                     }
                     Logger.Log($"[Client] Unable to connect to server, trying agien... [attempt: {attempts}]");
                 }
+				catch (Exception e)
+				{
+					Disconnect();
+					Logger.Log($"[Client] Failed to connect to server {e}");
+				}
             }
         }
         public static void Disconnect()
