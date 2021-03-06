@@ -8,6 +8,7 @@ namespace simple_tcp_server.Connecting
     {
         private static Socket socket;
         private static int id;
+		private static Thread receivingThread;
 
         public static void ConnectToServer(string ip = "127.0.0.1", int port = 26950)
         {
@@ -28,7 +29,7 @@ namespace simple_tcp_server.Connecting
                     socket.Connect(ip, port);
                     Logger.Log($"[Client] Successfully found connection to server!");
                     Logger.Log($"[Client] Started listening to the server!");
-                    Thread receivingThread = new Thread(ReceivingThread);
+                    receivingThread = new Thread(ReceivingThread);
                     receivingThread.Start(socket);
                     Logger.Log($"[Client] Waiting for registration...");
                     return;
@@ -55,6 +56,9 @@ namespace simple_tcp_server.Connecting
             Logger.Log("[Client] Socked closed, You are now disconnected!");
             socket.Close();
             socket = null;
+			receivingThread.Abort();
+			if(Server.IsRunning())
+				Server.Disconnect();
         }
         public static bool IsRunning()
         {

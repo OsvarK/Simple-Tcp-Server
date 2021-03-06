@@ -11,6 +11,7 @@ namespace simple_tcp_server.Hosting
     {
         private static Socket socket;
         private static List<ServerSlot> serverSlots;
+		private static Thread connectionThread;
 
         public static void StartServer(int port = 26950, int maxConnections = 1) 
         {
@@ -27,7 +28,7 @@ namespace simple_tcp_server.Hosting
             socket.Bind(new IPEndPoint(IPAddress.Any, port));
 
             Logger.Log("[Server] Starts listening for connections");
-            Thread connectionThread = new Thread(ConnectionThread);
+            connectionThread = new Thread(ConnectionThread);
             connectionThread.Start();
 
             Logger.Log("[Server] Creating a client instance...");
@@ -97,6 +98,7 @@ namespace simple_tcp_server.Hosting
         {
             Logger.Log("[Server] Socked closed, You are now disconnected!");
             socket.Close();
+			connectionThread.Abort();
             socket = null;
         }
         public static List<ServerSlot> GetConnectedClients() 
@@ -113,6 +115,7 @@ namespace simple_tcp_server.Hosting
         {
             public readonly int id;
             private Socket socket;
+			private Thread receivingThread;
             public ServerSlot(int id)
             {
                 this.id = id;
@@ -121,7 +124,7 @@ namespace simple_tcp_server.Hosting
             {
                 Logger.Log($"[Server] {socket.RemoteEndPoint} has connected!");
                 this.socket = socket;
-                Thread receivingThread = new Thread(ReceivingThread);
+                receivingThread = new Thread(ReceivingThread);
                 receivingThread.Start(this);
             }
             public void Disconnect()
@@ -130,6 +133,7 @@ namespace simple_tcp_server.Hosting
                 {
                     socket.Shutdown(SocketShutdown.Both);
                     socket = null;
+					receivingThread.Abort();
                     Logger.Log($"[Client {id}] has disconnected!");
                 }
             }
