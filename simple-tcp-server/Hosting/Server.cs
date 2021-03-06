@@ -93,11 +93,6 @@ namespace simple_tcp_server.Hosting
         {
             return socket != null;
         }
-		private static void CloseServerIfNoPlayers()
-		{
-		if (GetConnectedClients().Count == 0)
-			Disconnect();
-		}
         public static void Disconnect()
         {
             Logger.Log("[Server] Socked closed, You are now disconnected!");
@@ -136,7 +131,6 @@ namespace simple_tcp_server.Hosting
                     socket.Shutdown(SocketShutdown.Both);
                     socket = null;
                     Logger.Log($"[Client {id}] has disconnected!");
-					CloseServerIfNoPlayers();
                 }
             }
             public bool IsEmpty() { return socket == null; }
