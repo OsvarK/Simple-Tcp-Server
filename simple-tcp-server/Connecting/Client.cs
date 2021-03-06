@@ -52,7 +52,7 @@ namespace simple_tcp_server.Connecting
         }
         public static void Disconnect()
         {
-            Logger.Log("[Server] Socked closed, You are now disconnected!");
+            Logger.Log("[Client] Socked closed, You are now disconnected!");
             socket.Close();
             socket = null;
         }
