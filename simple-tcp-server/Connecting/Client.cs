@@ -81,7 +81,7 @@ namespace simple_tcp_server.Connecting
                         PacketHandler.ClientReadData(buffer);
                     }
                 }
-                catch (SocketException)
+                catch (Exception)
                 {
                     Disconnect();
                 }
