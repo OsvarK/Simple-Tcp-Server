@@ -31,7 +31,7 @@ namespace simple_tcp_server.Hosting
             connectionThread.Start();
 
             Logger.Log("[Server] Creating a client instance...");
-            Connecting.Client.ConnectToServer();
+            //Connecting.Client.ConnectToServer();		// <- If server application shulde be a client also
         }
         private static void ConnectionThread() 
         {
