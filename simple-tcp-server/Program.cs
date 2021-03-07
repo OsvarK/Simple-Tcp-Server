@@ -15,7 +15,7 @@ namespace simple_tcp_server
                     string value = Console.ReadLine();
                     if (value == "Host")
                     {
-                        Hosting.Server.StartServer();
+                        Hosting.Server.StartServer(true);
                     }
                     else if (value == "Join")
                     {
@@ -24,7 +24,10 @@ namespace simple_tcp_server
                         Connecting.Client.ConnectToServer(ip);
                     }
                 }
-                Console.ReadLine();
+                string input = Console.ReadLine();
+
+                if (input == "quit")
+                    Connecting.Client.Disconnect();
             }
         }
     }

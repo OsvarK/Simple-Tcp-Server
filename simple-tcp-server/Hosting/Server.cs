@@ -13,7 +13,7 @@ namespace simple_tcp_server.Hosting
         private static List<ServerSlot> serverSlots;
 		private static Thread connectionThread;
 
-        public static void StartServer(int port = 26950, int maxConnections = 1) 
+        public static void StartServer(bool createClientInstanceAfterServerStartup = false, int port = 26950, int maxConnections = 4) 
         {
             if (IsRunning())
                 return;
@@ -31,11 +31,16 @@ namespace simple_tcp_server.Hosting
             connectionThread = new Thread(ConnectionThread);
             connectionThread.Start();
 
-            Logger.Log("[Server] Creating a client instance...");
-            //Connecting.Client.ConnectToServer();		// <- If server application shulde be a client also
+            if (createClientInstanceAfterServerStartup)
+            {
+                Logger.Log("[Server] Creating a client instance...");
+                Connecting.Client.ConnectToServer();
+            }
         }
+
         private static void ConnectionThread() 
         {
+            // Listening for connections
             while (IsRunning())
             {	
 				try
@@ -48,6 +53,7 @@ namespace simple_tcp_server.Hosting
 					{
 						if (slot.IsEmpty())
 						{
+                            // Connection sucessfully, send registration (give client its id)
 							slot.Connect(connectingSocket);
 							Logger.Log($"[Server] Sending registration to {connectingSocket.RemoteEndPoint}...");
 							ServerSend.Registration(slot.id);
@@ -57,23 +63,27 @@ namespace simple_tcp_server.Hosting
 					}
 					if (!foundSlot)
 					{
-						Logger.Log($"[Server] Failed to connect [{connectingSocket.RemoteEndPoint}]: Server is full!");
+                        // Connection failed, server is full
+                        Logger.Log($"[Server] Failed to connect [{connectingSocket.RemoteEndPoint}]: Server is full!");
 						ServerSend.Error("Server is full", connectingSocket);
 						connectingSocket.Close();
 					}
 				}
-				catch {}
+				catch (Exception e) {
+                    Logger.Log($"[Server] Exception in  ConnectionThread() \n\n {e}");
+                }
 			}
         }
         private static void ReceivingThread(object serverSlot) 
         {
+            // Receiving Thread listening for each connected client
             ServerSlot sSlot = (ServerSlot)serverSlot;
             Socket socket = sSlot.GetSocket();
 
             byte[] buffer;
             int readBytes;
 
-            while (socket != null)
+            while (!sSlot.IsEmpty())
             {
                 try
                 {
@@ -88,17 +98,20 @@ namespace simple_tcp_server.Hosting
                 {
                     sSlot.Disconnect();
                 }
+                catch (Exception e)
+                {
+                    Logger.Log($"[SERVER] Exception in ReceivingThread() for slot[{sSlot.id}] \n\n {e}");
+                }
             }
         }
         public static bool IsRunning()
         {
             return socket != null;
         }
-        public static void Disconnect()
+        public static void CloseServer()
         {
             Logger.Log("[Server] Socked closed, You are now disconnected!");
             socket.Close();
-			connectionThread.Abort();
             socket = null;
         }
         public static List<ServerSlot> GetConnectedClients() 
@@ -126,6 +139,7 @@ namespace simple_tcp_server.Hosting
                 this.socket = socket;
                 receivingThread = new Thread(ReceivingThread);
                 receivingThread.Start(this);
+                OnServerAction.OnClientConnected(id);
             }
             public void Disconnect()
             {
@@ -133,8 +147,8 @@ namespace simple_tcp_server.Hosting
                 {
                     socket.Shutdown(SocketShutdown.Both);
                     socket = null;
-					receivingThread.Abort();
                     Logger.Log($"[Client {id}] has disconnected!");
+                    OnServerAction.OnClientDisconnected(id);
                 }
             }
             public bool IsEmpty() { return socket == null; }

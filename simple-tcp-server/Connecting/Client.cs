@@ -1,6 +1,8 @@
 ﻿using System.Net.Sockets;
+using System;
 using System.Threading;
 using simple_tcp_server.Data;
+using simple_tcp_server.Hosting;
 
 namespace simple_tcp_server.Connecting
 {
@@ -53,12 +55,14 @@ namespace simple_tcp_server.Connecting
         }
         public static void Disconnect()
         {
+            if (!IsRunning())
+                return;
+
             Logger.Log("[Client] Socked closed, You are now disconnected!");
             socket.Close();
             socket = null;
-			receivingThread.Abort();
 			if(Server.IsRunning())
-				Server.Disconnect();
+				Server.CloseServer();
         }
         public static bool IsRunning()
         {
@@ -79,7 +83,7 @@ namespace simple_tcp_server.Connecting
             byte[] buffer;
             int readBytes;
 
-            while (socket != null)
+            while (IsRunning())
             {
                 try
                 {
