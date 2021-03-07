@@ -2,6 +2,10 @@
 
 namespace simple_tcp_server.Hosting
 {
+    /// <summary>
+    /// In this class all incoming methods are beings represented. 
+    /// (the data from the <c>ClientSend</c> class is triggering a corresponding method in here)
+    /// </summary>
     class ServerHandle
     {
         public static void ConfirmRegistration(Packet packet)

@@ -7,12 +7,22 @@ using simple_tcp_server.Data;
 
 namespace simple_tcp_server.Hosting
 {
+    /// <summary>
+    /// A super simple TCP server.
+    /// </summary>
     class Server
     {
         private static Socket socket;
         private static List<ServerSlot> serverSlots;
 		private static Thread connectionThread;
 
+
+        /// <summary> Starting the tcp server.</summary>
+        /// <param name="createClientInstanceAfterServerStartup"> If true, after the creation 
+        /// of the server we are creating a client instance. Meaning we can use the server as both a client and server,
+        /// no need for two running applications.</param>
+        /// <param name="port"> Defines on what port the server should run on.</param>
+        /// <param name="maxConnections"> Defines how many connected clients this server can have.</param>
         public static void StartServer(bool createClientInstanceAfterServerStartup = false, int port = 26950, int maxConnections = 4) 
         {
             if (IsRunning())
@@ -38,9 +48,9 @@ namespace simple_tcp_server.Hosting
             }
         }
 
+        /// <summary> The thread for listening for incoming connections to the server.</summary>
         private static void ConnectionThread() 
         {
-            // Listening for connections
             while (IsRunning())
             {	
 				try
@@ -74,9 +84,10 @@ namespace simple_tcp_server.Hosting
                 }
 			}
         }
+
+        /// <summary> Receiving Thread listens to a connected server slot to recive data.</summary>
         private static void ReceivingThread(object serverSlot) 
         {
-            // Receiving Thread listening for each connected client
             ServerSlot sSlot = (ServerSlot)serverSlot;
             Socket socket = sSlot.GetSocket();
 
@@ -91,6 +102,7 @@ namespace simple_tcp_server.Hosting
                     readBytes = socket.Receive(buffer);
                     if (readBytes > 0)
                     {
+                        // Packet recived, send to reader
                         PacketHandler.ServerReadData(buffer);
                     }
                 }
@@ -104,16 +116,22 @@ namespace simple_tcp_server.Hosting
                 }
             }
         }
+
+        /// <summary> Check if server is running.</summary>
         public static bool IsRunning()
         {
             return socket != null;
         }
+
+        /// <summary> Closing the server.</summary>
         public static void CloseServer()
         {
             Logger.Log("[Server] Socked closed, You are now disconnected!");
             socket.Close();
             socket = null;
         }
+
+        /// <summary>Retrives all connected clients.</summary>
         public static List<ServerSlot> GetConnectedClients() 
         {
             List<ServerSlot> clients = new List<ServerSlot>();
@@ -124,6 +142,8 @@ namespace simple_tcp_server.Hosting
             }
             return clients;
         }
+
+        /// <summary>A server slot to store a connection</summary>
         public class ServerSlot
         {
             public readonly int id;
@@ -133,6 +153,9 @@ namespace simple_tcp_server.Hosting
             {
                 this.id = id;
             }
+
+            /// <summary>Connect a client to the this slot.</summary>
+            /// <param name="socket">connecting socket</param>
             public void Connect(Socket socket)
             {
                 Logger.Log($"[Server] {socket.RemoteEndPoint} has connected!");
@@ -141,6 +164,8 @@ namespace simple_tcp_server.Hosting
                 receivingThread.Start(this);
                 OnServerAction.OnClientConnected(id);
             }
+
+            /// <summary>Clear this slots of its connection.</summary>
             public void Disconnect()
             {
                 if(socket != null)
@@ -151,7 +176,11 @@ namespace simple_tcp_server.Hosting
                     OnServerAction.OnClientDisconnected(id);
                 }
             }
+
+            /// <summary>Checks if slot is empty.</summary>
             public bool IsEmpty() { return socket == null; }
+
+            /// <summary>Returns the connected clients socket.</summary>
             public Socket GetSocket() { return socket; }
         }
     }

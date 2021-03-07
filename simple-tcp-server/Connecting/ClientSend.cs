@@ -2,6 +2,7 @@
 
 namespace simple_tcp_server.Connecting
 {
+    /// <summary>This class is triggering methods in the <c>ServerHandle</c> class.</summary>
     class ClientSend
     {
         public static void Send(Packet packet)

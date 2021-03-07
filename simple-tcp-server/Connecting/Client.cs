@@ -6,12 +6,14 @@ using simple_tcp_server.Hosting;
 
 namespace simple_tcp_server.Connecting
 {
+    /// <summary> A tcp client to connect to the tcp server.</summary>
     class Client
     {
         private static Socket socket;
         private static int id;
 		private static Thread receivingThread;
 
+        /// <summary> Connect to server.</summary>
         public static void ConnectToServer(string ip = "127.0.0.1", int port = 26950)
         {
             if (IsRunning())
@@ -53,7 +55,9 @@ namespace simple_tcp_server.Connecting
 				}
             }
         }
-        public static void Disconnect()
+
+        /// <summary> Disconnect from current connection.</summary>
+        public static void Disconnect(bool terminateServerIfHost = true)
         {
             if (!IsRunning())
                 return;
@@ -61,21 +65,31 @@ namespace simple_tcp_server.Connecting
             Logger.Log("[Client] Socked closed, You are now disconnected!");
             socket.Close();
             socket = null;
-			if(Server.IsRunning())
+			if(Server.IsRunning() && terminateServerIfHost)
 				Server.CloseServer();
         }
+
+        /// <summary> Check if client is running/connected.</summary>
         public static bool IsRunning()
         {
             return socket != null;
         }
+
+        /// <summary> Get client id, the id that the server gave it.</summary>
         public static int GetId() { return id; }
+
+        /// <summary> Get client socket.</summary>
         public static Socket GetSocket() { return socket; }
+
+        /// <summary> Sets client id, the client id shoulde be given by the server!</summary>
         public static void ReciveRegistration(int newId)
         {
             Logger.Log($"[Client] Registration recived, you are now client[{newId}]");
             id = newId;
             ClientSend.ConfirmRegistration();
         }
+
+        /// <summary> Listening for packets from the server.</summary>
         private static void ReceivingThread(object socket)
         {
 

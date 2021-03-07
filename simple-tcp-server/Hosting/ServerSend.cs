@@ -3,6 +3,7 @@ using simple_tcp_server.Data;
 
 namespace simple_tcp_server.Hosting
 {
+    /// <summary>This class is triggering methods in the <c>ClientHandle</c> class.</summary>
     class ServerSend
     {
         #region send types

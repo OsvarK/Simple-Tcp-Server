@@ -2,6 +2,10 @@
 
 namespace simple_tcp_server.Connecting
 {
+    /// <summary>
+    /// In this class all incoming methods are beings represented. 
+    /// (the data from the <c>ServerSend</c> class is triggering a corresponding method in here)
+    /// </summary>
     public class ClientHandle
     {
         public static void Registration(Packet packet)
