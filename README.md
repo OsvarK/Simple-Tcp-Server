@@ -2,7 +2,7 @@
 This project here is created so that i dont have to rewrite a tcp connection every time I need one. This project is primarily intended for me and thus no maintenance of the code etc. is expected.
 
 
-## Send request to to client from server.
+## Send request to client from server.
 #### Step 1 - Create method in ClientHandle
 Create an void method inside the **ClientHandle** class and give it an parameter of class type **Packet**. This is the method that is going to be called from the server.
 ```cs
@@ -99,7 +99,7 @@ Finally, to execute the request from the server to the client, just call the met
 
 
 
-## Send request to to server from client.
+## Send request to server from client.
 
 
 #### Step 1 - Create method in ServerHandle
