@@ -1,5 +1,5 @@
 # A super simple tcp server and client.
-This project here is created so that i dont have to rewrite a tcp connection every time I need one. This project is primarily intended for me and thus no maintenance of the code etc. is expected.
+This project is created so that i dont have to rewrite a tcp connection every time I need one. This project is primarily intended for me and thus no maintenance of the code etc. is expected.
 
 
 ## Send request to client from server.
