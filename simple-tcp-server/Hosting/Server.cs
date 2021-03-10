@@ -79,6 +79,7 @@ namespace simple_tcp_server.Hosting
 						connectingSocket.Close();
 					}
 				}
+                catch (ThreadAbortException) { }
 				catch (Exception e) {
                     Logger.Log($"[Server] Exception in  ConnectionThread() \n\n {e}");
                 }
@@ -126,9 +127,16 @@ namespace simple_tcp_server.Hosting
         /// <summary> Closing the server.</summary>
         public static void CloseServer()
         {
+            if (!IsRunning())
+                return;
+
+            Logger.Log("[Server] Disconnecting clients...");
+            GetConnectedClients().ForEach(delegate (ServerSlot slot) { slot.Disconnect(); });
+
             Logger.Log("[Server] Socked closed, You are now disconnected!");
             socket.Close();
             socket = null;
+            connectionThread.Abort();
         }
 
         /// <summary>Retrives all connected clients.</summary>
