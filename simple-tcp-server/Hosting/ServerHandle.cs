@@ -11,6 +11,7 @@ namespace simple_tcp_server.Hosting
         public static void ConfirmRegistration(Packet packet)
         {
             Logger.Log($"[Server] Registration was confirmed by client[{packet.data[0]}]");
+            OnServerAction.OnClientConnected((int)packet.data[0]);
         }
     }
 }

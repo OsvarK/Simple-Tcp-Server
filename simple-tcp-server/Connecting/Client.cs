@@ -3,6 +3,7 @@ using System;
 using System.Threading;
 using simple_tcp_server.Data;
 using simple_tcp_server.Hosting;
+using System.Threading.Tasks;
 
 namespace simple_tcp_server.Connecting
 {
@@ -10,7 +11,7 @@ namespace simple_tcp_server.Connecting
     class Client
     {
         private static Socket socket;
-        private static int id;
+        private static int id = -1;
 		private static Thread receivingThread;
 
         /// <summary> Connect to server.</summary>
@@ -43,15 +44,14 @@ namespace simple_tcp_server.Connecting
                     if (attempts >= 5)
                     {
                         Logger.Log($"[Client] Failed to connect to server after {attempts} attempts, shutting down...");
-                        Disconnect();
+                        OnClientAction.UnableToConnectToServer();
                         return;
                     }
                     Logger.Log($"[Client] Unable to connect to server, trying agien... [attempt: {attempts}]");
                 }
-				catch (Exception e)
+				catch (Exception)
 				{
-					Disconnect();
-					Logger.Log($"[Client] Failed to connect to server {e}");
+                    OnClientAction.OnClientException();
 				}
             }
         }
@@ -63,9 +63,14 @@ namespace simple_tcp_server.Connecting
                 return;
 
             Logger.Log("[Client] Socked closed, You are now disconnected!");
-            socket.Close();
+            try
+            {
+                socket.Close();
+            }
+            catch (Exception) { }
             socket = null;
-			if(Server.IsRunning() && terminateServerIfHost)
+            id = -1;
+            if (Server.IsRunning() && terminateServerIfHost)
 				Server.CloseServer();
         }
 
@@ -74,20 +79,25 @@ namespace simple_tcp_server.Connecting
         {
             return socket != null;
         }
+        /// <summary> Check if client is registred.</summary>
+        public static bool IsRegistred()
+        {
+            return id != -1;
+        }
 
         /// <summary> Get client id, the id that the server gave it.</summary>
         public static int GetId() { return id; }
-
-        /// <summary> Get client socket.</summary>
-        public static Socket GetSocket() { return socket; }
 
         /// <summary> Sets client id, the client id shoulde be given by the server!</summary>
         public static void ReciveRegistration(int newId)
         {
             Logger.Log($"[Client] Registration recived, you are now client[{newId}]");
             id = newId;
-            ClientSend.ConfirmRegistration();
+            OnClientAction.OnClientSuccessfullyConnected();
         }
+
+        /// <summary> Get client socket.</summary>
+        public static Socket GetSocket() { return socket; }
 
         /// <summary> Listening for packets from the server.</summary>
         private static void ReceivingThread(object socket)
@@ -97,6 +107,18 @@ namespace simple_tcp_server.Connecting
             byte[] buffer;
             int readBytes;
 
+            // Listen for server
+            Task.Factory.StartNew(() =>
+            {
+                while (true)
+                {
+                    if (!Server.SocketConnected(soc))
+                        OnClientAction.LostConnectionToServer();
+                    Thread.Sleep(1000);
+                }
+            });
+
+            // Listen for server packet
             while (IsRunning())
             {
                 try
@@ -107,10 +129,11 @@ namespace simple_tcp_server.Connecting
                     {
                         PacketHandler.ClientReadData(buffer);
                     }
+
                 }
                 catch (Exception)
                 {
-                    Disconnect();
+                    OnClientAction.OnClientException();
                 }
             }
         }

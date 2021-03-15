@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using simple_tcp_server.Data;
 
 namespace simple_tcp_server.Hosting
 {
@@ -17,6 +18,16 @@ namespace simple_tcp_server.Hosting
         public static void OnClientConnected(int clientId)
         {
             // Called on player connected
+        }
+
+        public static void OnServerException()
+        {
+            Logger.Log($"[Server] Exception");
+        }
+
+        public static void OnServerClose()
+        {
+
         }
     }
 }

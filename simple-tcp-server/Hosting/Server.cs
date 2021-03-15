@@ -80,10 +80,21 @@ namespace simple_tcp_server.Hosting
 					}
 				}
                 catch (ThreadAbortException) { }
-				catch (Exception e) {
-                    Logger.Log($"[Server] Exception in  ConnectionThread() \n\n {e}");
+				catch (Exception) {
+                    OnServerAction.OnServerException();
                 }
 			}
+        }
+
+        /// <summary> Check if socket is still connected.</summary>
+        public static bool SocketConnected(Socket s)
+        {
+            bool part1 = s.Poll(1000, SelectMode.SelectRead);
+            bool part2 = (s.Available == 0);
+            if (part1 && part2)
+                return false;
+            else
+                return true;
         }
 
         /// <summary> Receiving Thread listens to a connected server slot to recive data.</summary>
@@ -113,7 +124,7 @@ namespace simple_tcp_server.Hosting
                 }
                 catch (Exception e)
                 {
-                    Logger.Log($"[SERVER] Exception in ReceivingThread() for slot[{sSlot.id}] \n\n {e}");
+                    OnServerAction.OnServerException();
                 }
             }
         }
@@ -134,9 +145,14 @@ namespace simple_tcp_server.Hosting
             GetConnectedClients().ForEach(delegate (ServerSlot slot) { slot.Disconnect(); });
 
             Logger.Log("[Server] Socked closed, You are now disconnected!");
-            socket.Close();
+            try
+            {
+                socket.Close();
+            }
+            catch (Exception){ }
             socket = null;
             connectionThread.Abort();
+            OnServerAction.OnServerClose();
         }
 
         /// <summary>Retrives all connected clients.</summary>
@@ -170,7 +186,6 @@ namespace simple_tcp_server.Hosting
                 this.socket = socket;
                 receivingThread = new Thread(ReceivingThread);
                 receivingThread.Start(this);
-                OnServerAction.OnClientConnected(id);
             }
 
             /// <summary>Clear this slots of its connection.</summary>
